@@ -1,25 +1,43 @@
 import request from 'request'
-import unzip from 'unzip'
+import unzipper from 'unzipper'
 import fs from 'fs'
+import os from 'os'
+import randomString from 'randomstring'
 import path from 'path'
+import ProgressBar from 'progress'
 
-export function downloadSub (url, uri) {
+function downloadZip (url) {
   return new Promise((resolve, reject) => {
-    let downloaded = false
+    const zipPath = path.join(os.tmpdir(), `${randomString.generate()}.zip`)
+    let progressBar = null
 
     request.get(url)
-      .pipe(unzip.Parse())
-      .on('entry', entry => {
-        if (path.extname(entry.path) !== '.srt' || downloaded) return entry.autodrain()
+      .on('response', res => {
+        const total = parseInt(res.headers['content-length'], 10)
 
-        entry.pipe(fs.createWriteStream(uri))
-        downloaded = true
-        resolve()
+        progressBar = new ProgressBar('  downloading [:bar] :percent', {
+          width: 20,
+          total
+        })
       })
-      .on('finish', () => {
-        if (!downloaded) {
-          reject(new Error('No srt file found in this package'))
-        }
+      .on('data', chunk => {
+        progressBar.tick(chunk.length)
       })
+      .pipe(fs.createWriteStream(zipPath))
+      .on('finish', () => resolve(zipPath))
+  })
+}
+
+export async function extractSub (url) {
+  const zipPath = await downloadZip(url)
+  const zipStream = await unzipper.Open.file(zipPath)
+
+  return zipStream.files
+}
+
+export function saveEntry (entry, uri) {
+  return new Promise(resolve => {
+    entry.stream().pipe(fs.createWriteStream(uri))
+      .on('finish', () => resolve())
   })
 }
