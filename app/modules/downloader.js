@@ -32,12 +32,20 @@ export async function extractSub (url) {
   const zipPath = await downloadZip(url)
   const zipStream = await unzipper.Open.file(zipPath)
 
-  return zipStream.files
+  return zipStream.files.map(file => Object.assign({
+    zipPath
+  }, file))
 }
 
 export function saveEntry (entry, uri) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     entry.stream().pipe(fs.createWriteStream(uri))
-      .on('finish', () => resolve())
+      .on('finish', () => {
+        fs.unlink(entry.zipPath, (err) => {
+          if (err) return reject(err)
+
+          resolve()
+        })
+      })
   })
 }
