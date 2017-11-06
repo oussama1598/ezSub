@@ -4,7 +4,6 @@ import { searchForSubtitle } from './controllers/sub.controller'
 program
   .version('0.0.1')
   .usage('[options] <name>')
-  .option('-q, --query <n>', 'Search query')
   .option('-f, --filter <n>', 'Filter files')
   .parse(process.argv);
 
