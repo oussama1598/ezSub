@@ -25,12 +25,7 @@ function filterFiles (filter, dirStructure) {
   })
 }
 
-async function showFilesSelection (filter) {
-  let dirStructure = await getVideosList(CWD)
-
-  if (filter) dirStructure = filterFiles(filter, dirStructure)
-  if (dirStructure.length === 0) throw new Error('No Files')
-
+async function showFilesSelection (dirStructure) {
   const filesPrompt = await prompt({
     type: 'checkbox',
     name: 'files',
@@ -89,15 +84,29 @@ async function showZipSelection (entries) {
   return srtPrompt.zipFile
 }
 
-export async function searchForSubtitle (filter = false) {
-  const files = await showFilesSelection(filter)
+export async function searchForSubtitle (language = false, filter = false) {
+  let dirStructure = await getVideosList(CWD)
+
+  if (filter) dirStructure = filterFiles(filter, dirStructure)
+  if (dirStructure.length === 0) return console.log('No Files')
+
+  const files = await showFilesSelection(dirStructure)
+
+  if (files.length === 0) return console.log('No selected files')
 
   for (const file of files) {
     const filename = path.basename(file, path.extname(file))
     const query = await askForQuery(filename)
-    const subs = await searchForSubtitles(query)
 
-    if (subs.length === 0) throw new Error('No subtitles found')
+    let subs = await searchForSubtitles(query)
+
+    if (subs.length === 0) {
+      console.log(`No subtitles found for ${filename}`)
+      continue
+    }
+    if (language) {
+      subs = subs.filter(sub => sub.language.toLowerCase() === language.toLowerCase())
+    }
 
     const subLink = await showSubsSelection(subs, query)
 
