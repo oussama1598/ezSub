@@ -76,7 +76,7 @@ async function showZipSelection (entries) {
 }
 
 export async function searchForSubtitle (query = false, filter = false) {
-  const fileUri = await showFilesSelection()
+  const fileUri = await showFilesSelection(filter)
   const filename = path.basename(fileUri, path.extname(fileUri))
 
   query = query || filename
