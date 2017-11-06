@@ -31,9 +31,9 @@ async function showFilesSelection (filter) {
   if (filter) dirStructure = filterFiles(filter, dirStructure)
   if (dirStructure.length === 0) throw new Error('No Files')
 
-  const filePrompt = await prompt({
-    type: 'list',
-    name: 'file',
+  const filesPrompt = await prompt({
+    type: 'checkbox',
+    name: 'files',
     message: 'Select a file',
     choices: _.sortBy(dirStructure, 'name').map(file => ({
       name: `${file.filename} ${file.srt ? '(SRT)' : ''}`,
@@ -41,7 +41,7 @@ async function showFilesSelection (filter) {
     }))
   })
 
-  return filePrompt.file
+  return filesPrompt.files
 }
 
 async function showSubsSelection (subs, query) {
@@ -76,20 +76,19 @@ async function showZipSelection (entries) {
 }
 
 export async function searchForSubtitle (query = false, filter = false) {
-  const fileUri = await showFilesSelection(filter)
-  const filename = path.basename(fileUri, path.extname(fileUri))
+  const files = await showFilesSelection(filter)
 
-  query = query || filename
+  for (const file of files) {
+    const filename = path.basename(file, path.extname(file))
+    const subs = await searchForSubtitles(filename)
 
-  const subs = await searchForSubtitles(query)
+    if (subs.length === 0) throw new Error('No subtitles found')
 
-  if (subs.length === 0) throw new Error('No subtitles found')
+    const subLink = await showSubsSelection(subs, filename)
+    const downloadUrl = await getDownloadUrl(subLink)
+    const zipFiles = await extractSub(downloadUrl)
+    const selectedEntry = await showZipSelection(zipFiles)
 
-  const subLink = await showSubsSelection(subs, query)
-  const downloadUrl = await getDownloadUrl(subLink)
-  const zipFiles = await extractSub(downloadUrl)
-  const selectedEntry = await showZipSelection(zipFiles)
-
-  await saveEntry(selectedEntry, path.join(path.dirname(fileUri), `${filename}.srt`))
-  console.log('Subtitle Downloaded')
+    await saveEntry(selectedEntry, path.join(path.dirname(file), `${filename}.srt`))
+  }
 }
