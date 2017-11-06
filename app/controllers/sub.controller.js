@@ -100,12 +100,12 @@ export async function searchForSubtitle (language = false, filter = false) {
 
     let subs = await searchForSubtitles(query)
 
+    if (language) {
+      subs = subs.filter(sub => sub.language.toLowerCase() === language.toLowerCase())
+    }
     if (subs.length === 0) {
       console.log(`No subtitles found for ${filename}`)
       continue
-    }
-    if (language) {
-      subs = subs.filter(sub => sub.language.toLowerCase() === language.toLowerCase())
     }
 
     const subLink = await showSubsSelection(subs, query)
