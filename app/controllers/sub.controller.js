@@ -119,6 +119,6 @@ export async function searchForSubtitle (language = false, filter = false) {
     const zipFiles = await extractSub(downloadUrl)
     const selectedEntry = await showZipSelection(zipFiles)
 
-    await saveEntry(selectedEntry, path.join(path.dirname(file), `${query}.srt`))
+    await saveEntry(selectedEntry, path.join(path.dirname(file), `${filename}.srt`))
   }
 }
