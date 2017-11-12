@@ -25,6 +25,10 @@ function filterFiles (filter, dirStructure) {
   })
 }
 
+function filterSubed(dirStructure){
+  return dirStructure.filter(file => !file.srt)
+}
+
 async function showFilesSelection (dirStructure) {
   const filesPrompt = await prompt({
     type: 'checkbox',
@@ -84,10 +88,12 @@ async function showZipSelection (entries) {
   return srtPrompt.zipFile
 }
 
-export async function searchForSubtitle (language = false, filter = false) {
+export async function searchForSubtitle (language = false, filter = false, showSubed = false) {
   let dirStructure = await getVideosList(CWD)
 
   if (filter) dirStructure = filterFiles(filter, dirStructure)
+  if (!showSubed) dirStructure = filterSubed(dirStructure)
+
   if (dirStructure.length === 0) return console.log('No Files')
 
   const files = await showFilesSelection(dirStructure)
