@@ -74,11 +74,11 @@ async function showSubsSelection (subs, query) {
   return subPrompt.subtitle
 }
 
-async function showZipSelection (entries) {
+async function showZipSelection (entries, filename) {
   const srtPrompt = await prompt({
     type: 'list',
     name: 'zipFile',
-    message: 'Select a file from the zip: ',
+    message: `Select a file from the zip (${filename}) : `,
     choices: entries.map(entry => ({
       name: `${entry.path} (${filesize(entry.uncompressedSize)})`,
       value: entry
@@ -123,7 +123,7 @@ export async function searchForSubtitle (language = false, filter = false, showS
 
     const downloadUrl = await getDownloadUrl(subLink)
     const zipFiles = await extractSub(downloadUrl)
-    const selectedEntry = await showZipSelection(zipFiles)
+    const selectedEntry = await showZipSelection(zipFiles, filename)
 
     await saveEntry(selectedEntry, path.join(path.dirname(file), `${filename}.srt`))
   }
