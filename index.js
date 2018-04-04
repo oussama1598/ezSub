@@ -1,4 +1,11 @@
 #!/usr/bin/env node
 
-require('babel-register')
-require('./app/app.js')
+/* eslint-disable */
+// removeIf(production)
+require('@babel/register');
+require('@babel/polyfill');
+// endRemoveIf(production)
+/* eslint-enable */
+
+require('app-module-path').addPath(require('path').join(__dirname, 'app'));
+require('app');
