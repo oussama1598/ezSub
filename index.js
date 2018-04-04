@@ -7,5 +7,5 @@ require('@babel/polyfill');
 // endRemoveIf(production)
 /* eslint-enable */
 
-require('app-module-path').addPath(require('path').join(__dirname, 'app'));
+require('app-module-path').addPath(require('path').join(__dirname, 'src'));
 require('app');

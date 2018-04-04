@@ -3,7 +3,7 @@ import { prompt } from 'inquirer';
 import filesize from 'filesize';
 import path from 'path';
 import stringSimilarity from 'string-similarity';
-import { getVideosList } from 'modules/files';
+import getVideosList from 'modules/files';
 import { searchForSubtitles, getDownloadUrl } from 'lib/subscene';
 import ZipStream from 'modules/ZipStream';
 
@@ -90,11 +90,12 @@ async function showZipSelection(entries, filename) {
 }
 
 export default async function(
+  dirUir = null,
   language = false,
   filter = false,
   showSubed = false
 ) {
-  let dirStructure = await getVideosList(CWD);
+  let dirStructure = await getVideosList(dirUir || CWD);
 
   if (filter) dirStructure = filterFiles(filter, dirStructure);
   if (!showSubed) dirStructure = filterSubed(dirStructure);

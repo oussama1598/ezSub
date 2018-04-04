@@ -14,7 +14,9 @@ export default class ZipStream {
 
   async getFiles() {
     const zipPath = await this.download();
-    return unzipper.Open.file(zipPath);
+    const zipStream = await unzipper.Open.file(zipPath);
+
+    return zipStream.files;
   }
 
   download() {
