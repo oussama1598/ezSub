@@ -42,6 +42,7 @@
     "progress": "^2.0.0",
     "randomstring": "^1.1.5",
     "recursive-readdir": "^2.2.1",
+    "request": "^2.85.0",
     "request-promise": "^4.2.2",
     "string-similarity": "^1.2.0",
     "underscore": "^1.8.3",

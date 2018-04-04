@@ -1,35 +1,32 @@
-import _ from 'underscore'
-import { getVideosList } from '../modules/files'
-import { extractSub, saveEntry } from '../modules/downloader'
-import stringSimilarity from 'string-similarity'
-import { prompt } from 'inquirer'
-import path from 'path'
-import { searchForSubtitles, getDownloadUrl } from '../lib/subscene'
-import filesize from 'filesize'
+import _ from 'underscore';
+import { prompt } from 'inquirer';
+import filesize from 'filesize';
+import path from 'path';
+import stringSimilarity from 'string-similarity';
+import { getVideosList } from '../modules/files';
+import { extractSub, saveEntry } from '../modules/downloader';
+import { searchForSubtitles, getDownloadUrl } from '../lib/subscene';
 
-const CWD = process.cwd()
+const CWD = process.cwd();
 
-function stringSim (str1, str2) {
+function stringSim(str1, str2) {
   return stringSimilarity.compareTwoStrings(
     str1.toLowerCase(),
     str2.toLowerCase()
-  )
+  );
 }
 
-function filterFiles (filter, dirStructure) {
+function filterFiles(filter, dirStructure) {
   return dirStructure.filter(file => {
-    return stringSim(
-      file.filename,
-      filter
-    ) > 0.2
-  })
+    return stringSim(file.filename, filter) > 0.2;
+  });
 }
 
-function filterSubed(dirStructure){
-  return dirStructure.filter(file => !file.srt)
+function filterSubed(dirStructure) {
+  return dirStructure.filter(file => !file.srt);
 }
 
-async function showFilesSelection (dirStructure) {
+async function showFilesSelection(dirStructure) {
   const filesPrompt = await prompt({
     type: 'checkbox',
     name: 'files',
@@ -38,43 +35,47 @@ async function showFilesSelection (dirStructure) {
       name: `${file.filename} ${file.srt ? '(SRT)' : ''}`,
       value: file.uri
     }))
-  })
+  });
 
-  return filesPrompt.files
+  return filesPrompt.files;
 }
 
-async function askForQuery (query) {
+async function askForQuery(query) {
   const queryPrompt = await prompt({
     type: 'input',
     name: 'query',
     message: 'Search query:',
     default: () => query
-  })
+  });
 
-  return queryPrompt.query
+  return queryPrompt.query;
 }
 
-async function showSubsSelection (subs, query) {
+async function showSubsSelection(subs, query) {
   const subPrompt = await prompt({
     type: 'list',
     name: 'subtitle',
     message: 'Select a subtitle: ',
-    choices: [{
-      name: 'Skip',
-      value: 'skip'
-    }].concat(_.sortBy(subs, 'language').map(sub => {
-      const match = (stringSim(sub.name, query) * 100).toFixed(2)
-      return {
-        name: `${sub.name} (${sub.language}) (${match}%)`,
-        value: sub.link
+    choices: [
+      {
+        name: 'Skip',
+        value: 'skip'
       }
-    }))
-  })
+    ].concat(
+      _.sortBy(subs, 'language').map(sub => {
+        const match = (stringSim(sub.name, query) * 100).toFixed(2);
+        return {
+          name: `${sub.name} (${sub.language}) (${match}%)`,
+          value: sub.link
+        };
+      })
+    )
+  });
 
-  return subPrompt.subtitle
+  return subPrompt.subtitle;
 }
 
-async function showZipSelection (entries, filename) {
+async function showZipSelection(entries, filename) {
   const srtPrompt = await prompt({
     type: 'list',
     name: 'zipFile',
@@ -83,48 +84,59 @@ async function showZipSelection (entries, filename) {
       name: `${entry.path} (${filesize(entry.uncompressedSize)})`,
       value: entry
     }))
-  })
+  });
 
-  return srtPrompt.zipFile
+  return srtPrompt.zipFile;
 }
 
-export async function searchForSubtitle (language = false, filter = false, showSubed = false) {
-  let dirStructure = await getVideosList(CWD)
+export default async function searchForSubtitle(
+  language = false,
+  filter = false,
+  showSubed = false
+) {
+  let dirStructure = await getVideosList(CWD);
 
-  if (filter) dirStructure = filterFiles(filter, dirStructure)
-  if (!showSubed) dirStructure = filterSubed(dirStructure)
+  if (filter) dirStructure = filterFiles(filter, dirStructure);
+  if (!showSubed) dirStructure = filterSubed(dirStructure);
 
-  if (dirStructure.length === 0) return console.log('No Files')
+  if (dirStructure.length === 0) return console.log('No Files');
 
-  const files = await showFilesSelection(dirStructure)
+  const files = await showFilesSelection(dirStructure);
 
-  if (files.length === 0) return console.log('No selected files')
+  if (files.length === 0) return console.log('No selected files');
 
   for (const file of files) {
-    const filename = path.basename(file, path.extname(file))
-    const query = await askForQuery(filename)
+    const filename = path.basename(file, path.extname(file));
+    const query = await askForQuery(filename);
 
-    let subs = await searchForSubtitles(query)
+    let subs = await searchForSubtitles(query);
 
     if (language) {
-      subs = subs.filter(sub => sub.language.toLowerCase() === language.toLowerCase())
+      subs = subs.filter(
+        sub => sub.language.toLowerCase() === language.toLowerCase()
+      );
     }
     if (subs.length === 0) {
-      console.log(`No subtitles found for ${filename}`)
-      continue
+      console.log(`No subtitles found for ${filename}`);
+      continue;
     }
 
-    const subLink = await showSubsSelection(subs, query)
+    const subLink = await showSubsSelection(subs, query);
 
     if (subLink === 'skip') {
-      console.log(`Skipped subtitles for ${filename}`)
-      continue
+      console.log(`Skipped subtitles for ${filename}`);
+      continue;
     }
 
-    const downloadUrl = await getDownloadUrl(subLink)
-    const zipFiles = await extractSub(downloadUrl)
-    const selectedEntry = await showZipSelection(zipFiles, filename)
+    const downloadUrl = await getDownloadUrl(subLink);
+    const zipFiles = await extractSub(downloadUrl);
+    const selectedEntry = await showZipSelection(zipFiles, filename);
 
-    await saveEntry(selectedEntry, path.join(path.dirname(file), `${filename}.srt`))
+    await saveEntry(
+      selectedEntry,
+      path.join(path.dirname(file), `${filename}.srt`)
+    );
+
+    return true;
   }
 }

@@ -1,13 +1,13 @@
-import Xray from 'x-ray'
+import Xray from 'x-ray';
 
-const URL = 'https://subscene.com/subtitles/release?q='
+const URL = 'https://subscene.com/subtitles/release?q=';
 const x = Xray({
   filters: {
     trim: value => value.trim()
   }
-})
+});
 
-export function searchForSubtitles (filename) {
+export function searchForSubtitles(filename) {
   return new Promise((resolve, reject) => {
     x(`${URL}${filename}`, '.content table tr', [
       {
@@ -16,21 +16,21 @@ export function searchForSubtitles (filename) {
         link: '.a1 a@href'
       }
     ])((err, result) => {
-      if (err) reject(err)
+      if (err) reject(err);
 
-      resolve(result)
-    })
-  })
+      resolve(result);
+    });
+  });
 }
 
-export function getDownloadUrl (url) {
+export function getDownloadUrl(url) {
   return new Promise((resolve, reject) => {
     x(url, '.download', {
       url: 'a@href'
     })((err, result) => {
-      if (err) reject(err)
+      if (err) reject(err);
 
-      resolve(result.url)
-    })
-  })
+      resolve(result.url);
+    });
+  });
 }
