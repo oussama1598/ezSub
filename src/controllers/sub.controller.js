@@ -3,9 +3,9 @@ import { prompt } from 'inquirer';
 import filesize from 'filesize';
 import path from 'path';
 import stringSimilarity from 'string-similarity';
-import { getVideosList } from '../modules/files';
-import { extractSub, saveEntry } from '../modules/downloader';
-import { searchForSubtitles, getDownloadUrl } from '../lib/subscene';
+import { getVideosList } from 'modules/files';
+import { searchForSubtitles, getDownloadUrl } from 'lib/subscene';
+import ZipStream from 'modules/ZipStream';
 
 const CWD = process.cwd();
 
@@ -89,7 +89,7 @@ async function showZipSelection(entries, filename) {
   return srtPrompt.zipFile;
 }
 
-export default async function searchForSubtitle(
+export default async function(
   language = false,
   filter = false,
   showSubed = false
@@ -105,6 +105,7 @@ export default async function searchForSubtitle(
 
   if (files.length === 0) return console.log('No selected files');
 
+  /* eslint-disable no-await-in-loop,no-restricted-syntax, no-continue */
   for (const file of files) {
     const filename = path.basename(file, path.extname(file));
     const query = await askForQuery(filename);
@@ -129,14 +130,15 @@ export default async function searchForSubtitle(
     }
 
     const downloadUrl = await getDownloadUrl(subLink);
-    const zipFiles = await extractSub(downloadUrl);
+    const zipStream = new ZipStream(downloadUrl);
+    const zipFiles = await zipStream.getFiles();
     const selectedEntry = await showZipSelection(zipFiles, filename);
 
-    await saveEntry(
+    await zipStream.save(
       selectedEntry,
       path.join(path.dirname(file), `${filename}.srt`)
     );
-
-    return true;
   }
+
+  return true;
 }
